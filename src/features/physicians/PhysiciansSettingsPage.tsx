@@ -13,7 +13,8 @@ import { DashboardHeader } from '../exams/components/DashboardHeader'
 import { SettingsNavigation } from '../settings/components/SettingsNavigation'
 import { CreatePhysicianModal } from './components/CreatePhysicianModal'
 import type { Physician } from './physician.types'
-import { listPhysicians, reactivatePhysician, revokePhysician } from './physicians-api'
+import { listPhysicians, reactivatePhysician, revokePhysician, resendPhysicianAccessEmail } from './physicians-api'
+import { physicianEmailStatus } from './physician-access-email'
 
 const physicianStatus = (physician: Physician) => {
   if (!physician.active) return { label: 'Revogado', color: 'text-red-700', dot: 'bg-red-500' }
@@ -37,6 +38,8 @@ export const PhysiciansSettingsPage = ({createOnOpen=false}: {createOnOpen?:bool
   const [actionTarget, setActionTarget] = useState<Physician | null>(null)
   const [changingStatus, setChangingStatus] = useState(false)
   const [reloadVersion, setReloadVersion] = useState(0)
+  const [sendingInvitation, setSendingInvitation] = useState<string | null>(null)
+  const [invitationMessage, setInvitationMessage] = useState('')
 
   useEffect(() => {
     let active = true
@@ -54,6 +57,12 @@ export const PhysiciansSettingsPage = ({createOnOpen=false}: {createOnOpen?:bool
       active = false
     }
   }, [reloadVersion])
+
+  useEffect(() => {
+    if (!physicians.some(item => item.accessEmail?.configured && ['PENDING', 'PROCESSING'].includes(item.accessEmail.status))) return
+    const timer = window.setInterval(() => setReloadVersion(value => value + 1), 15000)
+    return () => window.clearInterval(timer)
+  }, [physicians])
 
   if (!user) return null
   if (!hasPermission(user, 'physicians.view')) return <Navigate to="/dashboard" replace />
@@ -78,6 +87,16 @@ export const PhysiciansSettingsPage = ({createOnOpen=false}: {createOnOpen?:bool
     } finally {
       setChangingStatus(false)
     }
+  }
+
+  const resendInvitation = async (physician: Physician) => {
+    setSendingInvitation(physician.id); setInvitationMessage('')
+    try {
+      const accessEmail = await resendPhysicianAccessEmail(physician.id)
+      setPhysicians(items => items.map(item => item.id === physician.id ? { ...item, accessEmail } : item))
+      setInvitationMessage(accessEmail.configured ? 'Reenvio do convite solicitado.' : 'O convite aguarda a configuração do serviço de e-mail.')
+    } catch { setInvitationMessage('Não foi possível reenviar agora. Aguarde um minuto se o convite acabou de ser enviado.') }
+    finally { setSendingInvitation(null) }
   }
 
   return (
@@ -115,6 +134,7 @@ export const PhysiciansSettingsPage = ({createOnOpen=false}: {createOnOpen?:bool
           </div>
           <SettingsNavigation active="physicians" />
           {loadError ? <Alert variant="error">Não foi possível carregar os médicos.</Alert> : null}
+          {invitationMessage ? <Alert variant="info">{invitationMessage}</Alert> : null}
           {actionError ? (
             <Alert variant="error">Não foi possível alterar o acesso do médico.</Alert>
           ) : null}
@@ -142,7 +162,7 @@ export const PhysiciansSettingsPage = ({createOnOpen=false}: {createOnOpen?:bool
                     const status = physicianStatus(physician)
                     return (
                       <tr key={physician.id} className="border-t border-slate-100">
-                        <td className="px-5 py-4 font-bold text-slate-900">{physician.name}</td>
+                        <td className="px-5 py-4 text-slate-900"><p className="font-bold">{physician.name}</p><p className="mt-1 text-xs text-slate-500">{physician.email ?? 'E-mail não informado'}</p><p className="mt-1 text-xs text-slate-500">{physicianEmailStatus(physician.accessEmail)}</p></td>
                         <td className="px-4 py-4 text-slate-600">
                           {physician.registryProfile?.specialties.join(' · ') || physician.specialty}
                           {physician.registryProfile && <p className="mt-1 text-xs text-emerald-800">Estados habilitados: {physician.enabledStates?.join(', ') || 'Nenhum'}</p>}
@@ -155,7 +175,7 @@ export const PhysiciansSettingsPage = ({createOnOpen=false}: {createOnOpen?:bool
                                   .join(', ') || 'Sem unidades ativas'}
                           </p>
                         </td>
-                        <td className="px-4 py-4 font-semibold text-brand-800">{physician.crm}{physician.registryProfile?.registrations.map(item=><p key={item.crm+'/'+item.uf} className="mt-1 text-xs font-normal text-slate-600">{item.crm}/{item.uf} · {item.status}</p>)}{physician.contactPhone && <p className="mt-1 text-xs font-normal">{physician.contactPhone}</p>}</td>
+                        <td className="px-4 py-4 font-semibold text-brand-800">{physician.crm}<p className="mt-1 text-xs font-normal">Usuário: {physician.username ?? physician.crm}</p>{physician.registryProfile?.registrations.map(item=><p key={item.crm+'/'+item.uf} className="mt-1 text-xs font-normal text-slate-600">{item.crm}/{item.uf} · {item.status}</p>)}{physician.contactPhone && <p className="mt-1 text-xs font-normal">{physician.contactPhone}</p>}</td>
                         <td className="px-4 py-4">
                           <span
                             className={`inline-flex items-center gap-1.5 text-xs font-bold ${status.color}`}
@@ -165,6 +185,7 @@ export const PhysiciansSettingsPage = ({createOnOpen=false}: {createOnOpen?:bool
                           </span>
                         </td>
                         <td className="px-4 py-4 text-right">
+                          {hasPermission(user, 'physicians.create') && physician.canManage && physician.active && physician.accessEmail ? <Button variant="outline" size="sm" disabled={sendingInvitation === physician.id || physician.accessEmail.status === 'PROCESSING'} onClick={() => void resendInvitation(physician)} aria-label={`Reenviar e-mail de acesso para ${physician.name}`}>Reenviar e-mail</Button> : null}
                           {hasPermission(user, 'exam.catalog.view') ? <Button variant="outline" size="sm" onClick={() => setQualificationTarget(physician)}>Habilitações</Button> : null}
                           {hasPermission(user, 'memberships.manage') && physician.canManage ? (
                             <Button

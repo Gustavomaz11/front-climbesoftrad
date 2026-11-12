@@ -28,6 +28,9 @@ export const revokePhysician = (id: string) =>
     { authenticated: true },
   )
 
+export const resendPhysicianAccessEmail = (id: string) =>
+  apiRequestJson<NonNullable<Physician['accessEmail']>>(`/physicians/${id}/access-email`, { method: 'POST' }, { authenticated: true })
+
 export const reactivatePhysician = (id: string) =>
   apiRequestJson<Physician>(
     `/physicians/${id}/reactivate`,

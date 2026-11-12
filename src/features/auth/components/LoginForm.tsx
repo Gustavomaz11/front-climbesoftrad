@@ -82,7 +82,7 @@ export const LoginForm = () => {
         autoCapitalize="none"
         spellCheck={false}
         label="E-mail ou CRM"
-        placeholder="nome@instituicao.com.br ou CRM/UF 123456"
+        placeholder="nome@instituicao.com.br ou 7626SE"
         leftIcon={<UserRound size={18} />}
         error={errors.email?.message}
         reserveFeedbackSpace

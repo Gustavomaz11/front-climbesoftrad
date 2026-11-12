@@ -1,5 +1,8 @@
 import type { RegistryProfile } from './physician-registry.types'
 export interface Physician {
+  email: string | null
+  username: string | null
+  accessEmail?: { status: 'PENDING' | 'PROCESSING' | 'SENT' | 'FAILED' | 'CANCELLED'; configured: boolean } | null
   contactPhone?: string | null
   registryProfile?: RegistryProfile | null
   enabledStates?: string[]
@@ -22,6 +25,7 @@ export interface Physician {
 }
 
 export interface CreatePhysicianPayload {
+  email: string
   registryLookupId?: string
   contactPhone?: string
   allUnits: boolean

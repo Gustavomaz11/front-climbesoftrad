@@ -10,8 +10,9 @@ import { Modal } from '../../../components/ui/Modal'
 import type { HospitalUnit } from '../hospital-unit.types'
 import { createHospitalUnit, lookupUnitCnpj, updateHospitalUnit } from '../hospital-units-api'
 import { brazilStates } from '../../physicians/physician-registry.types'
+import { cnpjCaretPosition, formatCnpj, normalizeCnpj } from '../cnpj-format'
 
-const normalize = (value: string) => value.replace(/[.\-/\s]/g, '').toUpperCase()
+const normalize = normalizeCnpj
 const schema = z.object({
   cnpj: z.string().refine(value => /^[A-Z0-9]{12}\d{2}$/.test(normalize(value)), 'Informe o CNPJ completo.'),
   legalName: z.string().trim().min(2, 'Informe a razão social.').max(160), tradeName: z.string().trim().max(160),
@@ -31,7 +32,7 @@ export const CreateHospitalUnitModal = ({ unit, open, onClose, onCreated }: Prop
   useEffect(() => {
     if (!open) return
     lookupVersion.current++; lastCnpj.current = unit?.cnpj ?? ''
-    reset({ cnpj: unit?.cnpj ?? '', legalName: unit?.legalName ?? unit?.name ?? '', tradeName: unit?.tradeName ?? '', internalIdentifier: unit?.internalIdentifier ?? '',
+    reset({ cnpj: formatCnpj(unit?.cnpj ?? ''), legalName: unit?.legalName ?? unit?.name ?? '', tradeName: unit?.tradeName ?? '', internalIdentifier: unit?.internalIdentifier ?? '',
       uf: unit?.uf ?? '', address: unit?.address ?? { zipCode: '', street: '', number: '', neighborhood: '', city: '' }, contactPhone: unit?.contactPhone ?? '', contactEmail: unit?.contactEmail ?? '' })
     return () => invalidateLookup()
   }, [open, unit, reset, invalidateLookup])
@@ -58,7 +59,7 @@ export const CreateHospitalUnitModal = ({ unit, open, onClose, onCreated }: Prop
       setValue('address', { zipCode: '', street: '', number: '', neighborhood: '', city: '' })
       setValue('contactPhone', ''); setValue('contactEmail', '')
     }
-    setValue('cnpj', value.toUpperCase(), { shouldDirty: true })
+    setValue('cnpj', formatCnpj(value), { shouldDirty: true })
   }
   const submit = async (values: FormValues) => {
     setError('')
@@ -73,7 +74,13 @@ export const CreateHospitalUnitModal = ({ unit, open, onClose, onCreated }: Prop
     <form id="create-hospital-unit-form" onSubmit={event => void handleSubmit(submit)(event)} className="space-y-6" noValidate>
       {error && <Alert variant="error">{error}</Alert>}
       <fieldset className="space-y-4 rounded-xl border border-slate-200 p-4"><legend className="px-2 text-sm font-bold">Dados da empresa</legend>
-        <div className="flex items-start gap-3"><div className="flex-1"><Input {...register('cnpj')} label="CNPJ *" placeholder="00.000.000/0000-00" maxLength={18} autoCapitalize="characters" error={errors.cnpj?.message} onChange={event => changeCnpj(event.target.value)} onBlur={() => void lookup()} /></div><Button type="button" variant="outline" className="mt-7" loading={looking} onClick={() => void lookup(true)} leftIcon={<Search size={16} />}>Consultar CNPJ</Button></div>
+        <div className="flex items-start gap-3"><div className="flex-1"><Input {...register('cnpj')} label="CNPJ *" placeholder="00.000.000/0000-00" maxLength={18} autoCapitalize="characters" error={errors.cnpj?.message} onChange={event => {
+          const input = event.currentTarget, value = input.value
+          const beforeCaret = normalizeCnpj(value.slice(0, input.selectionStart ?? value.length)).length
+          changeCnpj(value)
+          const caret = cnpjCaretPosition(formatCnpj(value), beforeCaret)
+          input.setSelectionRange(caret, caret)
+        }} onBlur={() => void lookup()} /></div><Button type="button" variant="outline" className="mt-7" loading={looking} onClick={() => void lookup(true)} leftIcon={<Search size={16} />}>Consultar CNPJ</Button></div>
         {lookupError && <Alert variant="warning">{lookupError}</Alert>}
         {text('legalName', 'Razão social')}{text('tradeName', 'Nome fantasia', false)}{text('internalIdentifier', 'Identificador Interno da Empresa')}
         <p className="text-xs text-slate-500">O identificador é livre e será exibido na coluna Unidade da fila do ClimbeSoftRad.</p>
