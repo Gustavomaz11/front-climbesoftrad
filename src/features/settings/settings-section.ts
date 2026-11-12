@@ -1,0 +1,13 @@
+export type SettingsSection =
+  | 'modalities'
+  | 'preparation'
+  | 'dicom'
+  | 'contrast-protocols'
+  | 'exam-prices'
+  | 'exam-catalog'
+  | 'physicians'
+  | 'units'
+  | 'access-control'
+  | 'companies'
+  | 'memberships'
+  | 'preferences'

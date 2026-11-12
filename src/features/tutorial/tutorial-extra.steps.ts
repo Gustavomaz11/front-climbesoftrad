@@ -1,0 +1,55 @@
+import type { TutorialStep } from './tutorial.types'
+
+export const extraSteps: TutorialStep[] = [
+  {
+    id: 'protocols', phase: 'extra', title: 'Configurar protocolos de contraste', owner: 'Administrador e responsável clínico',
+    summary: 'Prepare os modelos que serão oferecidos na prescrição dos exames compatíveis.',
+    screen: 'Gestão → Protocolos de contraste',
+    requirements: ['Tipo ativo no catálogo.', 'Médico com vínculo ativo no escopo do protocolo.', 'Conteúdo e revisão definidos pelos responsáveis clínicos.'],
+    fields: [
+      { name: 'Nome, tipo de exame e unidade', fill: 'Identifique o modelo e seu alcance: unidade específica ou todas as unidades quando autorizado.' },
+      { name: 'Campos variáveis', fill: 'Chave, descrição, texto ou número, unidade de medida e obrigatoriedade.' },
+      { name: 'Texto e orientações', fill: 'Use {{chave}} para os campos definidos e {{observations}} para observações.' },
+      { name: 'Responsável e referência da revisão', fill: 'Na ativação, indique o médico e a referência de uma revisão clínica já realizada.' },
+    ],
+    instructions: ['Clique em Novo protocolo, preencha o modelo e use Salvar rascunho.', 'Após a revisão clínica, use Registrar aprovação e ativar, escolha o responsável e informe a referência.', 'Para alterar o conteúdo, crie uma Nova versão. A versão anterior permanece preservada.', 'Na Prescrição Médica, use Preencher por protocolo para aplicar uma versão ativa compatível.'],
+    result: 'Modelo ativo disponível para a prescrição dos exames correspondentes.',
+    links: [{ label: 'Abrir Protocolos de contraste', to: '/settings/contrast-protocols', permissions: ['contrast.protocols.view'] }],
+    related: ['catalog', 'physicians', 'prescription'],
+  },
+  {
+    id: 'prices', phase: 'extra', title: 'Configurar preços de exames', owner: 'Administrador autorizado',
+    summary: 'Registre as regras de faturamento à unidade e de repasse ao médico por período de vigência.',
+    screen: 'Gestão → Preços de exames',
+    requirements: ['Tipos ativos no catálogo.', 'Valores e vigências definidos pela administração.', 'Unidade e médico cadastrados quando a regra for específica.'],
+    fields: [
+      { name: 'Tabela e tipo do catálogo', fill: 'Escolha Faturamento à unidade ou Repasse ao médico e o tipo correspondente.' },
+      { name: 'Unidade e médico', fill: 'Defina o escopo; o beneficiário médico é aplicável ao repasse.' },
+      { name: 'Valor em BRL', fill: 'Valor não negativo em reais, com até duas casas decimais.' },
+      { name: 'Vigência e justificativa', fill: 'Informe início, término quando houver, e motivo do cadastro ou alteração.' },
+    ],
+    instructions: ['Cadastre uma regra para cada tabela e escopo necessários.', 'Confira valor, período e beneficiário antes de salvar.', 'Para mudar um valor, encerre a vigência anterior e cadastre outra regra para o próximo período.', 'Consulte a regra aplicável à data desejada.'],
+    result: 'Regras de preço registradas e consultáveis por data e escopo.',
+    troubleshooting: ['Vigências sobrepostas no mesmo escopo são bloqueadas. Revise as datas das regras existentes.'],
+    note: 'Estas são tabelas de referência. Apuração de produção, fechamento, pagamentos e demonstrativos permanecem pendentes.',
+    links: [{ label: 'Abrir Preços de exames', to: '/settings/exam-prices', permissions: ['exam.prices.view'] }],
+    related: ['catalog', 'physicians'],
+  },
+  {
+    id: 'imports', phase: 'extra', title: 'Importar identificadores legados', owner: 'Cadastro / gestor autorizado',
+    summary: 'Mapeie identificadores dos sistemas de origem para pacientes já cadastrados, com revisão antes da aplicação.',
+    screen: 'Pacientes → Importar identificadores',
+    requirements: ['Pacientes internos conferidos e unidades autorizadas.', 'Mapeamento conhecido entre os sistemas atuais e antigos.'],
+    fields: [
+      { name: 'unitId e patientId', fill: 'IDs da unidade e do cadastro interno conferido. O ID do paciente está disponível em sua página.' },
+      { name: 'issuer e externalId', fill: 'Sistema emissor atual e identificador exato, preservando os zeros.' },
+      { name: 'legacyIssuer e legacyExternalId', fill: 'Emissor e ID antigos, quando houver mapeamento legado.' },
+      { name: 'Arquivo CSV', fill: 'Use Baixar modelo CSV. O formato é UTF-8, separado por ponto e vírgula, até 1000 linhas e 2 MB.' },
+    ],
+    instructions: ['Baixe o modelo e preencha o mapeamento dos identificadores.', 'Selecione o arquivo e clique em Analisar prévia.', 'Revise as linhas, corrija conflitos ou rejeite entradas incorretas antes de aprovar.', 'Use Aprovar linhas válidas e Importar próximas 50 linhas. O lote pode ser retomado.'],
+    result: 'Identificadores associados aos pacientes conferidos, com relatório do lote.',
+    note: 'A importação vincula identificadores a cadastros existentes. Ela não importa uma lista completa de novos pacientes nem associa pessoas automaticamente pelo nome.',
+    links: [{ label: 'Abrir Importação de identificadores', to: '/patients/imports', permissions: ['patients.import'] }],
+    related: ['patient', 'identity'],
+  },
+]

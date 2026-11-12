@@ -1,0 +1,122 @@
+.report-document .ProseMirror {
+  min-height: 930px;
+  color: #172033;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11pt;
+  line-height: 1.65;
+  outline: none;
+}
+
+.report-document .ProseMirror p {
+  margin: 0 0 0.75rem;
+}
+
+.report-document .ProseMirror h1 {
+  margin: 1.5rem 0 0.75rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.report-document .ProseMirror h2 {
+  margin: 1.25rem 0 0.625rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.report-document .ProseMirror h3 {
+  margin: 1rem 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.report-document .ProseMirror ul,
+.report-document .ProseMirror ol {
+  margin: 0.75rem 0;
+  padding-left: 1.75rem;
+}
+
+.report-document .ProseMirror ul {
+  list-style: disc;
+}
+
+.report-document .ProseMirror ol {
+  list-style: decimal;
+}
+
+.report-document .ProseMirror blockquote {
+  margin: 1rem 0;
+  border-left: 3px solid #0891b2;
+  padding-left: 1rem;
+  color: #475569;
+}
+
+.report-document .ProseMirror img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.25rem auto;
+  border-radius: 0.5rem;
+}
+
+.report-document .ProseMirror p.is-editor-empty:first-child::before {
+  float: left;
+  height: 0;
+  color: #94a3b8;
+  content: "Comece a digitar o laudo...";
+  pointer-events: none;
+}
+
+.completed-report .ProseMirror {
+  min-height: 0;
+}
+
+.report-physician-signature {
+  margin-top: 8mm;
+  text-align: center;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.report-physician-signature > img {
+  display: block;
+  width: 60mm;
+  height: 20mm;
+  margin: 0 auto;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+@media print {
+  html, body, #root {
+    background: white !important;
+  }
+
+  .completed-report-page {
+    min-height: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  .completed-report {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .report-editor-chrome {
+    display: none !important;
+  }
+
+  .report-editor-canvas {
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  .report-document {
+    width: 100% !important;
+    zoom: 1 !important;
+    min-height: auto !important;
+    box-shadow: none !important;
+  }
+}
