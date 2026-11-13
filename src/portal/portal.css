@@ -1,0 +1,38 @@
+@import '@fontsource-variable/geist';
+@theme {
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --color-brand-950: var(--card);
+  --color-brand-900: var(--foreground);
+  --color-brand-800: var(--foreground);
+  --color-brand-700: var(--foreground);
+  --color-brand-600: #a855f7;
+  --color-brand-500: #c026d3;
+  --color-brand-100: var(--muted);
+  --color-brand-50: var(--muted);
+}
+html,body,#root { min-width:320px; min-height:100%; }
+body { margin:0; font-family:var(--font-sans); -webkit-font-smoothing:antialiased; }
+button,input,select,textarea { font:inherit; }
+button:not(:disabled),summary { cursor:pointer; }
+.portal-shell { --sidebar-width:16rem; }
+.portal-main { min-width:0; flex:1; }
+.portal-main > main,.portal-main > div > main { min-height:auto; background:transparent; }
+.portal-main main { padding:0!important; max-width:none; }
+.portal-main h1 { letter-spacing:-.025em; }
+.portal-main fieldset { border-color:var(--border); border-radius:var(--radius-lg); }
+.portal-main th { font-size:.75rem; font-weight:500; }
+.portal-chrome [data-slot='sidebar-header'] { height:4rem; }
+.portal-login form { margin-top:0; }
+.portal-login form [data-slot='input'] { height:2.25rem; background:color-mix(in oklab,var(--foreground) 5%,var(--card)); border-radius:.65rem; }
+.portal-login form > [aria-live] { min-height:0; }
+.portal-login form > [aria-live]:empty { display:none; }
+.portal-login form [data-slot='button'][type='submit'] { height:2.25rem; border:0; border-radius:.65rem; background:linear-gradient(to right,#ec4899,#9333ea); color:#fff; }
+.portal-login form > div:has(> label input[type='checkbox']) { padding-bottom:0; }
+.portal-page-enter { animation:portal-enter .2s ease-out; }
+@keyframes portal-enter { from { opacity:0;transform:translateY(3px); } to { opacity:1;transform:translateY(0); } }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important;transition:none!important;scroll-behavior:auto!important; } }
+.report-document,.completed-report { background:#fff!important; color:#0f172a; --foreground:#0f172a; --muted-foreground:#64748b; --card:#fff; --background:#fff; }
+@media print { .portal-chrome { display:none!important; } [data-slot='sidebar-inset'] { margin:0!important;border-radius:0!important; } }
+
+.dark { color-scheme:dark; }
+.light { color-scheme:light; }

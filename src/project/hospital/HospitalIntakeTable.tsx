@@ -1,0 +1,18 @@
+import { ArrowRight, CheckCircle2, FolderInput, LoaderCircle } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { hospitalBirthDateLabel } from './hospital-patient-summary'
+import type { HospitalIntake } from './hospital-api'
+
+export const HospitalIntakeTable = ({ rows, canSubmit, loading, submitted, onOpen }: { rows: HospitalIntake[]; canSubmit: boolean; loading: boolean; submitted: boolean; onOpen: (id: string) => void }) => <>
+  <Table className="min-w-[820px]"><TableHeader><TableRow className="bg-muted/70 hover:bg-muted/70">{['Paciente', 'Exame', 'Instituição', 'Arquivos', 'Situação', ''].map((label, index) => <TableHead key={index} className="h-11 px-5 text-[10px] uppercase">{label}</TableHead>)}</TableRow></TableHeader>
+    <TableBody>{rows.map(row => <TableRow key={row.id} className="group"><TableCell className="px-5 py-5"><p className="font-semibold text-foreground">{row.fields.patientName || 'Nome não informado'}</p><p className="mt-1 text-[11px] text-muted-foreground">{hospitalBirthDateLabel(row.fields.birthDate)}</p></TableCell>
+      <TableCell className="max-w-60 px-5"><p className="truncate" title={String(row.fields.studyDescription || '')}>{row.fields.studyDescription || 'Descrição pendente'}</p><Badge variant="secondary" className="mt-1.5 rounded-md bg-background text-[10px] font-medium">{row.fields.modality || 'Pendente'}</Badge></TableCell>
+      <TableCell className="max-w-48 whitespace-normal px-5 text-xs text-muted-foreground">{typeof row.fields.institutionName === 'string' && row.fields.institutionName.trim() || 'Instituição não informada'}</TableCell>
+      <TableCell className="px-5"><span className="font-medium tabular-nums">{row.fileCount}</span>{row.status === 'RECEIVING' && row.receipt?.expected && <p className="mt-1 text-[10px] text-muted-foreground">{row.receipt.validated}/{row.receipt.expected} validados</p>}{!!row.receipt?.failed && <p className="mt-1 text-[10px] text-amber-600 dark:text-amber-400">Reenvio pendente</p>}</TableCell>
+      <TableCell className="px-5"><Badge variant="outline" className={row.status === 'RECEIVING' ? 'gap-1.5 border-blue-100 bg-blue-50 text-blue-700' : row.status === 'DRAFT' ? 'border-amber-100 bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'gap-1.5 border-emerald-100 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}>{row.status === 'RECEIVING' && <LoaderCircle className="size-3 animate-spin" />}{row.status === 'SUBMITTED' && <CheckCircle2 className="size-3" />}{row.status === 'RECEIVING' ? 'Recebendo Exame' : row.status === 'DRAFT' ? 'Aguardando conferência' : 'Enviado'}</Badge></TableCell>
+      <TableCell className="px-5 text-right"><Button variant="outline" className="h-8 gap-2 text-xs" disabled={row.status === 'RECEIVING'} onClick={() => onOpen(row.id)}>{row.status === 'RECEIVING' ? 'Aguarde o recebimento' : row.status === 'DRAFT' && canSubmit ? 'Conferir e enviar' : 'Ver envio'}{row.status !== 'RECEIVING' && <ArrowRight className="size-3.5" />}</Button></TableCell>
+    </TableRow>)}</TableBody></Table>
+  {!rows.length && <div className="grid min-h-64 place-content-center gap-3 p-8 text-center"><span className="mx-auto grid size-12 place-items-center rounded-xl bg-muted text-muted-foreground"><FolderInput className="size-6" /></span><p className="text-sm font-medium">{loading ? 'Carregando estudos…' : submitted ? 'Nenhum estudo enviado' : 'Nenhum estudo aguardando conferência'}</p><p className="max-w-sm text-xs leading-5 text-muted-foreground">Os arquivos recebidos pelo Router da unidade aparecem aqui automaticamente.</p></div>}
+</>

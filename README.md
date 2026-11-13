@@ -1,4 +1,7 @@
-# SouRad — Frontends
+# ClimbeSoftRad - Novo frontend
+
+A aplicação agora usa o template de `novo-front/main-files`, com os três portais integrados à API do Render. Veja [a documentação da migração](../docs/novo-frontend.md) para estrutura, rotas e validação.
+
 
 ## Publicação na Vercel
 
