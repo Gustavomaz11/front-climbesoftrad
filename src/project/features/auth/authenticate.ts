@@ -75,6 +75,7 @@ export const authenticate = async (credentials: LoginCredentials): Promise<Authe
     const authorization = await apiRequestJson<unknown>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({
+        portalKind: import.meta.env.VITE_PORTAL_KIND || 'sourad',
         email: credentials.email,
         password: credentials.password,
         remember: credentials.remember,

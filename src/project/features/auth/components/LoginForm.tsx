@@ -24,7 +24,7 @@ type SubmitStatus = 'idle' | 'loading' | 'success' | 'error'
 const errorMessages = {
   'rate-limited': 'Muitas tentativas em pouco tempo. Aguarde alguns instantes e tente novamente.',
   'invalid-credentials': 'Usuário ou senha incorretos.',
-  'access-revoked': 'Seu acesso foi revogado. Entre em contato com o administrador.',
+  'access-revoked': 'Seu usuário não tem acesso a este portal ou teve o acesso revogado. Solicite a liberação à Gestão.',
   connection: 'Não foi possível conectar ao servidor.',
   server: 'Não foi possível realizar o login. Tente novamente.',
 } as const

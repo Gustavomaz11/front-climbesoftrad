@@ -1,3 +1,5 @@
+import { PortalAccessFields } from '../../companies/components/PortalAccessFields'
+import type { PortalKind } from '../../auth/portal-access'
 import { useState } from 'react'
 import { Alert } from '../../../components/ui/Alert'
 import { Button } from '../../../components/ui/Button'
@@ -13,6 +15,7 @@ import { useMedicalSpecialties } from '../useMedicalSpecialties'
 import { PhysicianAccessEmailNotice } from './PhysicianAccessEmailNotice'
 
 export const CreatePhysicianModal = ({open,onClose,onCreated}: {open: boolean; onClose:()=>void; onCreated:()=>void}) => {
+  const [allowedPortals, setAllowedPortals] = useState<PortalKind[]>(['sourad'])
   const {user} = useAuthentication()
   const [allUnits,setAllUnits] = useState(user?.activeCompany?.allUnits ?? false), [unitIds,setUnitIds] = useState<string[]>([])
   const [profile,setProfile] = useState<RegistryLookupResult | null>(null), [phone,setPhone] = useState('')
@@ -21,6 +24,7 @@ export const CreatePhysicianModal = ({open,onClose,onCreated}: {open: boolean; o
   const {specialties} = useMedicalSpecialties()
   const submit = async () => {
     if(!profile) return
+    if(!allowedPortals.length) { setError('Selecione ao menos um portal autorizado.'); return }
     if(!allUnits && !unitIds.length) { setError('Selecione ao menos uma unidade autorizada.');return }
     setBusy(true);setError('')
     const first=profile.registrations[0]
@@ -28,7 +32,7 @@ export const CreatePhysicianModal = ({open,onClose,onCreated}: {open: boolean; o
     const specialty=specialties.find(item=>profile.specialties.some(name=>normalize(name)===normalize(item.name)))
     try {
       const result=await createPhysician({ name:profile.name,crm:`${first.crm}/${first.uf}`,registryLookupId:profile.lookupId,
-        email:email.trim().toLowerCase(),contactPhone:phone.trim(),...(specialty ? {specialtyId:specialty.id} : {}),allUnits,unitIds })
+        allowedPortals, email:email.trim().toLowerCase(),contactPhone:phone.trim(),...(specialty ? {specialtyId:specialty.id} : {}),allUnits,unitIds })
       setCreated(result);onCreated()
     } catch { setError('Não foi possível cadastrar. Verifique se o médico já está vinculado ou se a consulta expirou.') }
     finally { setBusy(false) }
@@ -44,6 +48,7 @@ export const CreatePhysicianModal = ({open,onClose,onCreated}: {open: boolean; o
       <PhysicianRegistryFields value={profile} onChange={setProfile} disabled={busy} />
       <Input label="E-mail do médico *" type="email" required maxLength={254} autoComplete="email" value={email} disabled={busy} onChange={event=>setEmail(event.target.value)} helperText="O médico receberá as instruções e o botão de acesso neste e-mail." />
       <Input label="Telefone de contato (opcional)" type="tel" maxLength={30} value={phone} disabled={busy} onChange={event=>setPhone(event.target.value)} />
+      <PortalAccessFields value={allowedPortals} onChange={setAllowedPortals} disabled={busy} />
       <MembershipUnitsFields allUnits={allUnits} unitIds={unitIds} disabled={busy} onChange={(all,ids)=>{setAllUnits(all);setUnitIds(ids)}} />
       <p className="text-sm text-muted-foreground">O usuário e a senha inicial serão o número do CRM seguido da UF em maiúsculas, sem separador (ex.: 7626SE). O médico deverá trocar a senha no primeiro acesso.</p>
     </form>}

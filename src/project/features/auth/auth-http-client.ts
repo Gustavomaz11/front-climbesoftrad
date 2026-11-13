@@ -33,6 +33,7 @@ const sendRequest = async (
   stamp?: ContextStamp,
 ) => {
   const headers = new Headers(init.headers)
+  headers.set('X-Portal-Kind', import.meta.env.VITE_PORTAL_KIND || 'sourad')
   headers.set('Accept', 'application/json')
   headers.set('X-Requested-With', 'XMLHttpRequest')
   if (typeof init.body==='string' && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')

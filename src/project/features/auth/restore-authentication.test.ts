@@ -7,8 +7,8 @@ afterEach(()=>{vi.unstubAllGlobals();clearAccessToken();selectRequestWorkspace({
 it('shares session restoration so concurrent mounts can recover a retired hospital-company selection',async()=>{
   selectRequestWorkspace({companyId:legacy,unitId:null})
   const user={id:'00000000-0000-4000-8000-000000000003',email:'admin@example.test',username:null,fullName:'Admin',role:'ADMIN',
-    mustChangePassword:false,isPlatformAdmin:true,centralCompanyId:central,permissions:['physicians.view'],
-    accessRole:{id:'',code:'ADMIN',name:'Administrador'},companies:[{id:central,name:'SouRad',membershipId:null,allUnits:true,accessRole:{id:'',code:'ADMIN',name:'Administrador'},units:[]}],
+    allowedPortals:['sourad','hospital','configuracoes'],mustChangePassword:false,isPlatformAdmin:true,centralCompanyId:central,permissions:['physicians.view'],
+    accessRole:{id:'',code:'ADMIN',name:'Administrador'},companies:[{allowedPortals:['sourad','hospital','configuracoes'],id:central,name:'SouRad',membershipId:null,allUnits:true,accessRole:{id:'',code:'ADMIN',name:'Administrador'},units:[]}],
     activeCompany:{id:central,name:'SouRad',membershipId:null,allUnits:true,unitIds:[],selectedUnitId:null}}
   const fetch=vi.fn(async(url:string,init:RequestInit)=>{
     await Promise.resolve()

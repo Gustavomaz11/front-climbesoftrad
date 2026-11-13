@@ -1,8 +1,11 @@
+import type { PortalKind } from '../auth/portal-access'
+
 export interface WorkspaceSelection {
   companyId: string | null
   unitId: string | null
 }
 export interface AccessibleCompany {
+  allowedPortals?: PortalKind[]
   id: string
   name: string
   membershipId: string | null
@@ -34,6 +37,7 @@ export interface PresentationSettings {
   effective: DocumentPresentation
 }
 export interface CompanyMembership {
+  allowedPortals: PortalKind[]
   id: string
   userId: string
   companyId: string

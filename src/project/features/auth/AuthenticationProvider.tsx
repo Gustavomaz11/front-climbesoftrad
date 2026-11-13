@@ -1,3 +1,4 @@
+import { canAccessPortal } from './portal-access'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   AuthenticationContext,
@@ -82,8 +83,8 @@ export const AuthenticationProvider = ({ children }: { children: ReactNode }) =>
     if (version !== identityVersion.current) return
     const current = userRef.current
     if (
-      JSON.stringify([current?.activeCompany, current?.permissions]) !==
-      JSON.stringify([updated.activeCompany, updated.permissions])
+      JSON.stringify([current?.activeCompany, current?.permissions, current?.allowedPortals]) !==
+      JSON.stringify([updated.activeCompany, updated.permissions, updated.allowedPortals])
     ) {
       setWorkspaceEpoch((value) => value + 1)
     }
@@ -97,7 +98,8 @@ export const AuthenticationProvider = ({ children }: { children: ReactNode }) =>
       void refreshUser().catch(() => {})
     }
     window.addEventListener('focus', refresh)
-    return () => window.removeEventListener('focus', refresh)
+    const interval = window.setInterval(refresh, 30_000)
+    return () => { window.removeEventListener('focus', refresh); window.clearInterval(interval) }
   }, [status, switchingContext, refreshUser])
 
   const registerContextChangeGuard = useCallback((guard: ContextChangeGuard) => {
@@ -167,10 +169,10 @@ export const AuthenticationProvider = ({ children }: { children: ReactNode }) =>
     <AuthenticationContext.Provider value={value}>
       {children}
       <ForcedPasswordChangeModal
-        open={Boolean(user?.mustChangePassword)}
+        open={Boolean(user?.mustChangePassword && canAccessPortal(user))}
         onChangePassword={changePassword}
       />
-      <PhysicianSignatureModal open={Boolean(user && !user.mustChangePassword && user.mustUploadSignature)} onDone={refreshUser} onClose={() => undefined} />
+      <PhysicianSignatureModal open={Boolean(user && canAccessPortal(user) && !user.mustChangePassword && user.mustUploadSignature)} onDone={refreshUser} onClose={() => undefined} />
     </AuthenticationContext.Provider>
   )
 }

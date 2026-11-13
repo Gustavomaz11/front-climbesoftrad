@@ -1,3 +1,5 @@
+import { PortalAccessFields } from './PortalAccessFields'
+import type { PortalKind } from '../../auth/portal-access'
 import { NativeSelect as SurfaceNativeSelect } from '@/components/ui/native-select'
 import { useEffect, useState } from 'react'
 import { Alert } from '../../../components/ui/Alert'
@@ -16,6 +18,7 @@ export const ProvisionUserModal = ({
   onClose: () => void
   onCreated: () => void
 }) => {
+  const [allowedPortals, setAllowedPortals] = useState<PortalKind[]>([])
   const [roles, setRoles] = useState<AccessRole[]>([])
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -43,6 +46,7 @@ export const ProvisionUserModal = ({
   }, [])
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
+    if (!allowedPortals.length) { setError('Selecione ao menos um portal autorizado.'); return }
     setSaving(true)
     setError('')
     try {
@@ -50,6 +54,7 @@ export const ProvisionUserModal = ({
         fullName: name.trim(),
         email: email.trim(),
         roleId,
+        allowedPortals,
         allUnits,
         unitIds,
       })
@@ -150,6 +155,7 @@ export const ProvisionUserModal = ({
               ))}
             </SurfaceNativeSelect>
           </label>
+          <PortalAccessFields value={allowedPortals} onChange={setAllowedPortals} disabled={saving} />
           <MembershipUnitsFields
             allUnits={allUnits}
             unitIds={unitIds}

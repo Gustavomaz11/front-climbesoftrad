@@ -34,7 +34,11 @@ export const listCompanyMemberships = () =>
   apiRequestJson<CompanyMembership[]>('/company-memberships', {}, { authenticated: true })
 export const ownCompanyMembership = () =>
   apiRequestJson<CompanyMembership>('/company-memberships/me', {}, { authenticated: true })
+export const saveMembershipPortals = (id: string, allowedPortals: import('../auth/portal-access').PortalKind[]) =>
+  apiRequestJson<CompanyMembership>(`/company-memberships/${id}/portals`, { method: 'PUT', body: JSON.stringify({ allowedPortals }) }, { authenticated: true })
+
 export const provisionCompanyUser = (input: {
+  allowedPortals: import('../auth/portal-access').PortalKind[]
   email: string
   fullName: string
   roleId: string

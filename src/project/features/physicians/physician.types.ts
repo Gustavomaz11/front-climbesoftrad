@@ -1,5 +1,7 @@
+import type { PortalKind } from '../auth/portal-access'
 import type { RegistryProfile } from './physician-registry.types'
 export interface Physician {
+  allowedPortals: PortalKind[]
   email: string | null
   username: string | null
   accessEmail?: { status: 'PENDING' | 'PROCESSING' | 'SENT' | 'FAILED' | 'CANCELLED'; configured: boolean } | null
@@ -25,6 +27,7 @@ export interface Physician {
 }
 
 export interface CreatePhysicianPayload {
+  allowedPortals: PortalKind[]
   email: string
   registryLookupId?: string
   contactPhone?: string

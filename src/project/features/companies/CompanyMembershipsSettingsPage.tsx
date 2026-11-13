@@ -1,3 +1,5 @@
+import { MembershipPortalsModal } from './components/MembershipPortalsModal'
+import { portalAccessLabel } from '../auth/portal-access'
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Alert } from '../../components/ui/Alert'
@@ -20,6 +22,7 @@ export const CompanyMembershipsSettingsPage = () => {
   const { user, refreshUser } = useAuthentication()
   const [memberships, setMemberships] = useState<CompanyMembership[]>([])
   const [reload, setReload] = useState(0)
+  const [editingPortals, setEditingPortals] = useState<CompanyMembership | null>(null)
   const [creating, setCreating] = useState(false)
   const [editingUnits, setEditingUnits] = useState<CompanyMembership | null>(null)
   const [editingSignature, setEditingSignature] = useState<CompanyMembership | null>(null)
@@ -106,6 +109,7 @@ export const CompanyMembershipsSettingsPage = () => {
           >
             <div className="min-w-60 flex-1">
               <h2 className="font-bold text-foreground">{membership.fullName}</h2>
+              <p className="mt-2 text-xs text-muted-foreground">Portais: {portalAccessLabel(membership.allowedPortals)}</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {membership.username || membership.email} · {membership.accessRole.name}
               </p>
@@ -127,6 +131,7 @@ export const CompanyMembershipsSettingsPage = () => {
             </span>
             {hasPermission(user, 'memberships.manage') && membership.canManage ? (
               <>
+                <Button variant="outline" size="sm" onClick={() => setEditingPortals(membership)}>Portais</Button>
                 <Button variant="outline" size="sm" onClick={() => setEditingUnits(membership)}>
                   Unidades
                 </Button>
@@ -158,6 +163,7 @@ export const CompanyMembershipsSettingsPage = () => {
           Nenhum vínculo encontrado neste contexto.
         </p>
       ) : null}
+      {editingPortals && <MembershipPortalsModal key={editingPortals.id} membershipId={editingPortals.id} name={editingPortals.fullName} allowedPortals={editingPortals.allowedPortals} onClose={() => setEditingPortals(null)} onSaved={updated} />}
       {creating ? (
         <ProvisionUserModal onClose={() => setCreating(false)} onCreated={updated} />
       ) : null}

@@ -15,12 +15,14 @@ const authenticatedUser = z.object({
   isPlatformAdmin: z.boolean(),
   accessRole,
   permissions: z.array(z.string()),
+  allowedPortals: z.array(z.enum(['sourad', 'hospital', 'configuracoes'])),
   companies: z.array(
     z.object({
       id: z.string().uuid(),
       name: z.string(),
       membershipId: z.string().nullable(),
       allUnits: z.boolean(),
+      allowedPortals: z.array(z.enum(['sourad', 'hospital', 'configuracoes'])),
       accessRole,
       units: z.array(unit),
     }),

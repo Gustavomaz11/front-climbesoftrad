@@ -1,3 +1,5 @@
+import { MembershipPortalsModal } from '../companies/components/MembershipPortalsModal'
+import { portalAccessLabel } from '../auth/portal-access'
 import { Input as SearchInput } from '@/components/ui/input'
 import { Search } from 'lucide-react'
 import { StatCard } from '@/portal/StatCard'
@@ -33,6 +35,7 @@ export const PhysiciansSettingsPage = ({createOnOpen=false}: {createOnOpen?:bool
   const { user } = useAuthentication()
   const navigate = useNavigate()
 
+  const [editingPortals, setEditingPortals] = useState<Physician | null>(null)
   const [editingUnits, setEditingUnits] = useState<Physician | null>(null)
   const [qualificationTarget, setQualificationTarget] = useState<Physician | null>(null)
   const [search, setSearch] = useState('')
@@ -157,6 +160,7 @@ export const PhysiciansSettingsPage = ({createOnOpen=false}: {createOnOpen?:bool
                       <SurfaceTableRow key={physician.id} className="border-t border-border">
                         <SurfaceTableCell className="px-5 py-4 text-foreground"><p className="font-bold">{physician.name}</p><p className="mt-1 text-xs text-muted-foreground">{physician.email ?? 'E-mail não informado'}</p><p className="mt-1 text-xs text-muted-foreground">{physicianEmailStatus(physician.accessEmail)}</p></SurfaceTableCell>
                         <SurfaceTableCell className="px-4 py-4 text-muted-foreground">
+                          <p className="mb-2 text-xs text-muted-foreground">Portais: {portalAccessLabel(physician.allowedPortals)}</p>
                           {physician.registryProfile?.specialties.join(' · ') || physician.specialty}
                           {physician.registryProfile && <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">Estados habilitados: {physician.enabledStates?.join(', ') || 'Nenhum'}</p>}
                           <p className="mt-1 text-xs text-muted-foreground">
@@ -179,6 +183,7 @@ export const PhysiciansSettingsPage = ({createOnOpen=false}: {createOnOpen?:bool
                         </SurfaceTableCell>
                         <SurfaceTableCell className="px-4 py-4 text-right">
                           {hasPermission(user, 'physicians.create') && physician.canManage && physician.active && physician.accessEmail ? <Button variant="outline" size="sm" disabled={sendingInvitation === physician.id || physician.accessEmail.status === 'PROCESSING'} onClick={() => void resendInvitation(physician)} aria-label={`Reenviar e-mail de acesso para ${physician.name}`}>Reenviar e-mail</Button> : null}
+                          {hasPermission(user, 'memberships.manage') && physician.canManage ? <Button variant="outline" size="sm" onClick={() => setEditingPortals(physician)}>Portais</Button> : null}
                           {hasPermission(user, 'exam.catalog.view') ? <Button variant="outline" size="sm" onClick={() => setQualificationTarget(physician)}>Habilitações</Button> : null}
                           {hasPermission(user, 'memberships.manage') && physician.canManage ? (
                             <Button
@@ -225,6 +230,7 @@ export const PhysiciansSettingsPage = ({createOnOpen=false}: {createOnOpen?:bool
           </SurfaceCard>
         </main>
       </div>
+      {editingPortals && <MembershipPortalsModal key={editingPortals.membershipId} membershipId={editingPortals.membershipId} name={editingPortals.name} allowedPortals={editingPortals.allowedPortals} onClose={() => setEditingPortals(null)} onSaved={() => setReloadVersion(v => v + 1)} />}
       {editingUnits ? (
         <MembershipUnitsModal
           key={editingUnits.membershipId}

@@ -1,3 +1,4 @@
+import type { PortalKind } from './portal-access'
 import type { AccessibleCompany, ActiveCompany } from '../companies/company.types'
 
 export interface LoginCredentials {
@@ -7,6 +8,7 @@ export interface LoginCredentials {
 }
 
 export interface AuthenticatedUser {
+  allowedPortals?: PortalKind[]
   centralCompanyId?: string
   id: string
   email: string
