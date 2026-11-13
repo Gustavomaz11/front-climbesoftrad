@@ -13,11 +13,12 @@ import { useAuthentication } from '../auth/auth-context'
 import { hasPermission } from '../auth/auth.types'
 import {
   getExamReport,
-  releaseReportPresence,
+  closeReportSession,
   saveExamReport,
-  touchReportPresence,
   uploadReportImage,
 } from './report-api'
+import {useReportSession} from './use-report-session'
+import {Modal} from '../../components/ui/Modal'
 import { reportEditorExtensions } from './report-editor.extensions'
 import type { ReportExamSummary } from './report.types'
 import { ReportToolbar } from './components/ReportToolbar'
@@ -47,10 +48,14 @@ export const ReportEditorPage = () => {
   const workflow = useWorkflowStatus(examId)
   const [completion, setCompletion] = useState<CompletedReport | null>(null)
   const [loadedExamId, setLoadedExamId] = useState<string | null>(null)
+  const [loadRevision,setLoadRevision]=useState(0)
   const [finalizing, setFinalizing] = useState(false), [confirmFinalize, setConfirmFinalize] = useState(false), [finishError, setFinishError] = useState('')
   const finishingRef = useRef(false)
+  const [clientId,setClientId]=useState(()=>crypto.randomUUID())
+  const [leaseHeld,setLeaseHeld]=useState(false),[confirmExit,setConfirmExit]=useState(false),[exitBusy,setExitBusy]=useState(false),[exitError,setExitError]=useState('')
+  const lastContentRef=useRef<JSONContent>(emptyDocument)
   const assignedToOther = Boolean(workflow.value?.reportingUserId && workflow.value.reportingUserId !== user?.id)
-  const canEdit = Boolean(user && !assignedToOther && (user.role !== 'DOCTOR' || (workflow.value?.reportingUserId === user.id && workflow.value?.workflowState === 'IN_PROGRESS')) && loadedExamId === examId && hasPermission(user, 'reports.edit') && workflow.mutable && workflow.value?.workflowState !== 'TYPED' && !completion && !finalizing)
+  const canEdit = Boolean(user?.role==='DOCTOR' && leaseHeld && !exitBusy && !assignedToOther && workflow.value?.reportingUserId === user.id && workflow.value?.workflowState === 'IN_PROGRESS' && loadedExamId === examId && hasPermission(user, 'reports.edit') && workflow.mutable && !completion && !finalizing)
   const canUploadImage = Boolean(canEdit && user && hasPermission(user, 'reports.images.upload'))
   const [presentation, setPresentation] = useState<DocumentPresentation>({
     headerText: '',
@@ -72,13 +77,16 @@ export const ReportEditorPage = () => {
     extensions: reportEditorExtensions,
     content: emptyDocument,
     editable: canEdit,
-    onUpdate: () => {
+    onUpdate: ({editor:current}) => {
       if (!loadedRef.current || !canEdit) return
+      lastContentRef.current=current.getJSON()
       revisionRef.current += 1
       setRevision(revisionRef.current)
       setStatus('pending')
     },
   })
+
+  const session=useReportSession({examId,clientId,enabled:Boolean(user?.role==='DOCTOR' && loadedExamId===examId && workflow.value?.workflowState==='IN_PROGRESS' && workflow.value?.reportingUserId===user.id && !completion),onHeld:setLeaseHeld,content:()=>lastContentRef.current})
 
   const queueSave = useCallback(
     (content: JSONContent, targetRevision: number) => {
@@ -89,7 +97,7 @@ export const ReportEditorPage = () => {
         .then(async () => {
           if (finishingRef.current) return
           try {
-            const result = await saveExamReport(examId, content)
+            const result = await saveExamReport(examId, content,clientId)
             setUpdatedAt(result.updatedAt)
             if (revisionRef.current === targetRevision) setStatus('saved')
           } catch {
@@ -99,7 +107,7 @@ export const ReportEditorPage = () => {
       saveChainRef.current = operation
       return operation
     },
-    [canEdit, examId],
+    [canEdit, examId,clientId],
   )
 
   const saveNow = useCallback(() => {
@@ -125,6 +133,7 @@ export const ReportEditorPage = () => {
         const report = await getExamReport(examId)
         if (!active) return
         editor.commands.setContent(report.content)
+        lastContentRef.current=report.content
         loadedRef.current = true
         setExam(report.exam)
         setPresentation(report.presentation)
@@ -139,35 +148,15 @@ export const ReportEditorPage = () => {
       active = false
       loadedRef.current = false
     }
-  }, [editor, examId])
+  }, [editor, examId,loadRevision])
 
-  useEffect(() => {
-    if (!examId || !exam || !canEdit) return
-    const clientId = crypto.randomUUID()
-    const touch = () => void touchReportPresence(examId, clientId).catch(() => undefined)
-    const release = () => void releaseReportPresence(examId, clientId).catch(() => undefined)
 
-    touch()
-    const heartbeat = window.setInterval(touch, 15_000)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') touch()
-    }
-    window.addEventListener('pagehide', release)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      window.clearInterval(heartbeat)
-      window.removeEventListener('pagehide', release)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      release()
-    }
-  }, [canEdit, exam, examId])
 
   useEffect(() => {
     if (!editor || revision === 0 || !canEdit) return
     const timeout = window.setTimeout(() => {
       void queueSave(editor.getJSON(), revision)
-    }, 1200)
+    }, 700)
     return () => window.clearTimeout(timeout)
   }, [canEdit, editor, queueSave, revision])
 
@@ -193,7 +182,7 @@ export const ReportEditorPage = () => {
     if (!editor || !examId || !canUploadImage) return
     setUploadingImage(true)
     try {
-      const image = await uploadReportImage(examId, file)
+      const image = await uploadReportImage(examId, file,clientId)
       editor
         .chain()
         .focus()
@@ -211,15 +200,15 @@ export const ReportEditorPage = () => {
     () =>
       registerContextChangeGuard(async () => {
         if (finishingRef.current) throw new Error('Aguarde a finalização do laudo antes de trocar o contexto.')
-        if (!editor || !examId || !loadedRef.current || !canEdit || status === 'saved') return
+        if (!editor || !examId || !loadedRef.current || !leaseHeld) return
         editor.setEditable(false, false)
         const restore = () => {
           if (!editor.isDestroyed) editor.setEditable(canEdit, false)
         }
         try {
           await saveChainRef.current
-          const saved = await saveExamReport(examId, editor.getJSON())
-          setUpdatedAt(saved.updatedAt)
+          await closeReportSession(examId,clientId,editor.getJSON())
+          setLeaseHeld(false);workflow.refresh()
           setStatus('saved')
           return restore
         } catch (error) {
@@ -228,11 +217,11 @@ export const ReportEditorPage = () => {
           throw error
         }
       }),
-    [canEdit, editor, examId, registerContextChangeGuard, status],
+    [canEdit, editor, examId, registerContextChangeGuard, leaseHeld,clientId,workflow],
   )
 
   useEffect(() => {
-    if (!examId || workflow.value?.workflowState !== 'TYPED' || completion) return
+    if (!examId || !['SIGNED','RESIGNED','REVIEW','REVALIDATED'].includes(workflow.value?.workflowState??'') || completion) return
     let active = true
     void getCompletedReport(examId).then(result => { if (active) setCompletion(result) }).catch(() => undefined)
     return () => { active = false }
@@ -243,23 +232,37 @@ export const ReportEditorPage = () => {
     finishingRef.current = true; setFinalizing(true); setFinishError(''); editor.setEditable(false)
     try {
       await saveChainRef.current
-      const saved = await saveExamReport(examId, editor.getJSON())
+      const saved = await saveExamReport(examId, editor.getJSON(),clientId)
       setUpdatedAt(saved.updatedAt); setStatus('saved')
       const current = await apiRequestJson<WorkflowStatus>(`/exams/${examId}/workflow-status`, {}, { authenticated: true })
-      const result = await finalizeReport(examId, current.workflowVersion, saved.contentHash, signatureId)
+      const result = await finalizeReport(examId, current.workflowVersion, saved.contentHash, signatureId,clientId)
       setCompletion(result); setConfirmFinalize(false); workflow.refresh()
     } catch (failure) { setFinishError(reportCompletionError(failure)) }
     finally { finishingRef.current = false; setFinalizing(false) }
   }
 
+  const leave=useCallback(async(forced=false)=>{
+    if(!examId || !editor || exitBusy)return
+    setExitBusy(true);setExitError('');editor.setEditable(false)
+    try{await saveChainRef.current;await closeReportSession(examId,clientId,editor.getJSON());setLeaseHeld(false);setStatus('saved');navigate('/my-queue',{replace:true,state:forced?{message:'Laudo salvo. Edição encerrada pela administração.'}:undefined})}
+    catch{setExitError('Não foi possível salvar e encerrar. Mantenha o painel aberto e tente novamente.');setExitBusy(false)}
+  },[examId,editor,clientId,exitBusy,navigate])
+  useEffect(()=>{
+    if(!session.releaseReason || exitBusy || exitError)return
+    let active=true
+    queueMicrotask(()=>{if(active)void leave(true)})
+    return()=>{active=false}
+  },[session.releaseReason,exitBusy,exitError,leave])
+
   if (!editor) return null
   if (completion) return <CompletedReportView document={completion} canSend={Boolean(user?.permissions.includes('reports.deliver'))}
-    onBack={() => navigate('/dashboard')} onSent={sentAt => setCompletion(current => current ? { ...current, sentAt } : current)} />
+    onBack={() => navigate('/dashboard')} onRevisionStarted={()=>window.location.reload()} onSent={sentAt => setCompletion(current => current ? { ...current, sentAt } : current)} />
 
   return (
     <main className="min-h-screen bg-muted">
-      {examId ? <WorkflowEditorBanner id={examId} status={workflow.value} canStart={Boolean(user && !assignedToOther && hasPermission(user, 'reports.edit'))} onChange={workflow.refresh} /> : null}
-      {assignedToOther && <p role="status" className="report-editor-chrome border-b px-6 py-3 text-sm">Este exame está na fila de outro médico. O laudo está disponível para consulta.</p>}
+      {examId ? <WorkflowEditorBanner id={examId} status={workflow.value} canStart={Boolean(user?.role==='DOCTOR' && (!assignedToOther || workflow.value?.workflowState==='TYPED') && hasPermission(user, 'reports.edit'))} onChange={()=>{setClientId(crypto.randomUUID());setLoadedExamId(null);setLoadRevision(n=>n+1);workflow.refresh()}} /> : null}
+      {session.error && <p role="alert" className="report-editor-chrome p-4 text-sm text-destructive">{session.error}</p>}
+      {session.releaseReason && <aside role="alert" className="report-editor-chrome border-b p-4 text-sm">Encerramento solicitado pela administração: {session.releaseReason}. Salvando o conteúdo antes de sair.{exitError && <><p>{exitError}</p><Button disabled={exitBusy} onClick={()=>void leave(true)}>Tentar salvar e encerrar</Button></>}</aside>}
       {examId ? <PatientHistoryPanel examId={examId} /> : null}
       <header className="report-editor-chrome flex min-h-16 flex-wrap items-center justify-between gap-3 bg-card px-4 py-3 text-white sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
@@ -268,7 +271,7 @@ export const ReportEditorPage = () => {
             size="icon"
             className="text-white hover:bg-card/10 hover:text-white"
             onClick={() => {
-              window.close()
+              if(leaseHeld){setConfirmExit(true);return}
               navigate('/dashboard')
             }}
             aria-label="Voltar aos exames"
@@ -302,7 +305,8 @@ export const ReportEditorPage = () => {
             variant="ghost"
             size="icon"
             className="text-white hover:bg-card/10 hover:text-white"
-            onClick={() => window.print()}
+            disabled
+            title="Assine o laudo para imprimir ou exportar a versão liberada"
             aria-label="Imprimir laudo"
           >
             <Printer size={19} />
@@ -358,6 +362,9 @@ export const ReportEditorPage = () => {
           </p>
         </article>
       </div>
+      <Modal open={confirmExit} title="Salvar e sair do laudário" description="O conteúdo será mantido como Digitado, no seu nome." onClose={()=>{if(!exitBusy)setConfirmExit(false)}} dismissible={!exitBusy}>
+        {exitError&&<p role="alert" className="text-destructive">{exitError}</p>}<div className="flex justify-end gap-3"><Button variant="outline" disabled={exitBusy} onClick={()=>setConfirmExit(false)}>Continuar laudando</Button><Button disabled={exitBusy} onClick={()=>void leave()}>{exitBusy?'Salvando…':'Salvar e sair'}</Button></div>
+      </Modal>
       <SignReportModal open={confirmFinalize} busy={finalizing} error={finishError} patientName={exam?.patientName} onClose={() => { if (!finalizing) setConfirmFinalize(false) }} onSign={signatureId => void finish(signatureId)} />
     </main>
   )

@@ -29,7 +29,9 @@ const documentRoutes: RouteObject[] = [
   { path:'/viewer/:examId', lazy:async()=>({ Component:(await import('@/project/features/dicom/DicomViewerLaunchPage')).DicomViewerLaunchPage }) },
   { path:'/research/exams/:examId', lazy:async()=>({ Component:(await import('@/project/features/research-ai/ResearchAiPage')).ResearchAiPage }) },
 ]
+const versionRoutes:RouteObject[]=[{path:'/report-history/:versionId',lazy:async()=>({Component:(await import('@/project/features/reports/ReportVersionPage')).ReportVersionPage})}]
 const managementRoutes: RouteObject[] = [
+  {path:'/settings/report-reviews',lazy:async()=>({Component:(await import('@/project/features/reports/ReportReviewsManagementPage')).ReportReviewsManagementPage})},
   { path:'/dashboard', lazy:async()=>({ Component:(await import('@/portal/ManagementHome')).ManagementHome }) },
   ...(['physicians','units'] as const).flatMap(kind=>[
     { path:'/settings/'+kind,element:<Navigate to={'/settings/'+kind+'/list'} replace /> },
@@ -60,7 +62,7 @@ const pages=kind==='hospital'?hospitalRoutes:kind==='configuracoes'?managementRo
 export const router=createBrowserRouter([{element:<Root />,errorElement:<ErrorPage />,children:[
   {path:'/login',element:<Login />},
   {path:'/',element:<Navigate to="/dashboard" replace />},
-  {element:<Protected />,children:[{element:<AppLayout />,children:pages},...(kind==='sourad'?[{element:<Documents />,children:documentRoutes}]:[])]},
+  {element:<Protected />,children:[{element:<AppLayout />,children:pages},{element:<Documents />,children:[...versionRoutes,...(kind==='sourad'?documentRoutes:[])]}]},
   ...(kind==='sourad'?[{path:'/settings/*',element:<ManagementRedirect />}]:[]),
   {path:'*',element:<Navigate to="/dashboard" replace />},
 ]}])

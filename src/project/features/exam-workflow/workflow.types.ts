@@ -1,6 +1,6 @@
 import type { Exam } from '../exams/exam.types'
 
-export const workflowLabels = { TO_PREPARE: 'A preparar', READY: 'Pronto', IN_PROGRESS: 'Em elaboração', TYPED: 'Digitado', SIGNED: 'Assinado', PENDING: 'Pendente', RECALLED: 'Reconvocado', CANCELLED: 'Cancelado' } as const
+export const workflowLabels = { TO_PREPARE: 'A preparar', READY: 'Pronto', IN_PROGRESS: 'Laudando', TYPED: 'Digitado', SIGNED: 'Assinado', RESIGNED:'Reassinado', REVIEW:'Reavaliar', REVALIDATED:'Revalidado sem Modificação', PENDING: 'Pendente', RECALLED: 'Reconvocar', CANCELLED: 'Cancelado' } as const
 export type WorkflowState = keyof typeof workflowLabels
 export const preparationLabels = { ORDER: 'Pedido médico', QUESTIONNAIRE: 'Questionário', IMAGES: 'Imagens completas conferidas', COMPARATIVE: 'Comparativo' } as const
 export type PreparationItem = keyof typeof preparationLabels
@@ -12,6 +12,7 @@ export interface PreparationCheck {
   evidenceIds: string[]; checkedByUserId: string | null; checkedAt: string | null
 }
 export interface WorkflowIssue {
+  recall_purpose?:'CORRECTION'|'COMPLEMENT'|null
   id: string; exam_id: string; kind: 'PENDING' | 'RECALL'; category: string; reason: string; requested_action: string | null
   responsible_user_id: string | null; responsible_name: string | null; unit_id: string
   phase: 'PREPARATION' | 'REPORTING'; opened_at: string; resolved_at: string | null; resolution_reason: string | null

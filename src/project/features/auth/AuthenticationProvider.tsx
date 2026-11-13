@@ -60,6 +60,7 @@ export const AuthenticationProvider = ({ children }: { children: ReactNode }) =>
   }, [])
 
   const logout = useCallback(async () => {
+    for(const guard of Array.from(guards.current)) await guard()
     identityVersion.current += 1
     try {
       await requestLogout()

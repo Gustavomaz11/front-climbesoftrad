@@ -6,17 +6,22 @@ import { Modal } from '../../components/ui/Modal'
 import { reportEditorExtensions } from './report-editor.extensions'
 import { reportCompletionError, sendReport, type CompletedReport } from './completed-report'
 import './report-editor.css'
+import {ReportLifecyclePanel} from './ReportLifecyclePanel'
+import {useAuditedReportPrint} from './use-audited-report-print'
+import type {ReportHistory} from './report-lifecycle-api'
 
 export const CompletedReportView = ({
   document,
   onBack,
   canSend = false,
   onSent,
+  onRevisionStarted,
 }: {
   document: CompletedReport
   onBack: () => void
   canSend?: boolean
   onSent?: (sentAt: string) => void
+  onRevisionStarted?:()=>void
 }) => {
   const editor = useEditor(
     { extensions: reportEditorExtensions, content: document.content, editable: false },
@@ -25,7 +30,10 @@ export const CompletedReportView = ({
   const [confirm, setConfirm] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState('')
-  const [signatureReady, setSignatureReady] = useState(!document.signature)
+  const [loadedSignatureId,setLoadedSignatureId]=useState<string|null>(null)
+  const signatureReady=!document.signature || loadedSignatureId===document.id
+  const [history,setHistory]=useState<ReportHistory|null>(null)
+  const printing=useAuditedReportPrint(document.id,signatureReady)
   const send = async () => {
     setBusy(true)
     setError('')
@@ -46,19 +54,23 @@ export const CompletedReportView = ({
           ← Voltar
         </Button>
         <h1 className="font-bold">
-          {document.sentAt ? 'Laudo enviado ao hospital' : 'Laudo finalizado'}
+          {document.version>1?'Laudo reassinado':'Laudo assinado'}{document.sentAt?' · Enviado ao hospital':''}
         </h1>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" disabled={!signatureReady} onClick={() => window.print()} leftIcon={<Printer size={16} />}>
-            Imprimir / Salvar PDF
+          <Button variant="outline" disabled={!signatureReady||printing.busy} onClick={() => void printing.print()} leftIcon={<Printer size={16} />}>
+            Imprimir
           </Button>
-          {canSend && !document.sentAt && document.originUnitName && (
+          <Button variant="outline" title="Na janela de impressão, selecione Salvar como PDF" disabled={!signatureReady||printing.busy} onClick={()=>void printing.print('EXPORT_REQUESTED')}>Exportar PDF</Button>
+          {canSend && history?.isLatest && ['SIGNED','RESIGNED','REVALIDATED'].includes(history.workflowState) && !document.sentAt && document.originUnitName && (
             <Button onClick={() => setConfirm(true)} leftIcon={<Send size={16} />}>
               Enviar ao hospital
             </Button>
           )}
         </div>
       </header>
+      {printing.error&&<p role="alert" className="report-editor-chrome p-4 text-sm text-destructive">{printing.error}</p>}
+      <p className="report-print-denied">Use os botões Imprimir ou Exportar PDF do sistema para registrar esta ação no histórico.</p>
+      <ReportLifecyclePanel document={document} onRevisionStarted={onRevisionStarted} onHistory={setHistory}/>
       <div
         role="status"
         className="report-editor-chrome mx-auto max-w-[850px] px-4 py-4 text-sm text-brand-900"
@@ -71,6 +83,7 @@ export const CompletedReportView = ({
         <p className="mt-1 text-xs text-muted-foreground">
           Versão finalizada pelo médico. Assinatura digital por certificado não aplicada.
         </p>
+        {document.revisionReason&&<p className="mt-2 text-sm">Motivo da correção: {document.revisionReason}</p>}
       </div>
       <article className="report-document completed-report mx-auto min-h-[1120px] w-full max-w-[850px] bg-card px-6 py-10 shadow-sm sm:px-16 sm:py-14">
         <p className="mb-6 whitespace-pre-line text-center font-semibold">
@@ -86,7 +99,7 @@ export const CompletedReportView = ({
         </div>
         <EditorContent editor={editor} />
         <div className="report-physician-signature text-sm">
-          {document.signature && <img src={document.signature.dataUrl} alt={`Assinatura de ${document.physician.name}`} onLoad={() => setSignatureReady(true)} onError={() => { setSignatureReady(false); setError('Não foi possível carregar a assinatura para impressão. Atualize a página.') }} />}
+          {document.signature && <img src={document.signature.dataUrl} alt={`Assinatura de ${document.physician.name}`} onLoad={() => setLoadedSignatureId(document.id)} onError={() => { setLoadedSignatureId(null); setError('Não foi possível carregar a assinatura para impressão. Atualize a página.') }} />}
           <p className="mt-2 font-bold">CRM {document.physician.crm}</p>
           <p className="mt-1">{document.physician.name}</p>
           <p className="mt-2 text-xs text-muted-foreground">

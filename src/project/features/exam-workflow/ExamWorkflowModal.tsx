@@ -17,7 +17,7 @@ export const ExamWorkflowModal = ({ exam, onClose, onDocuments }: { exam: Exam; 
   const [tab, setTab] = useState('PREPARATION'), [reason, setReason] = useState('')
   if (!user) return null
   const can = (permission: string) => hasPermission(user, permission)
-  const mutable = data && !data.exam.archivedAt && !['CANCELLED', 'SIGNED'].includes(data.exam.workflowState)
+  const mutable = data && !data.exam.archivedAt && !['CANCELLED','SIGNED','RESIGNED','REVIEW','REVALIDATED'].includes(data.exam.workflowState)
   return <Modal open title={`Preparação · ${exam.patientName}`} description={exam.studyDescription} size="lg" dismissible={!busy} onClose={onClose}>
     <div className="space-y-5">
       {error ? <p role="alert" className="rounded-xl bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
@@ -30,7 +30,7 @@ export const ExamWorkflowModal = ({ exam, onClose, onDocuments }: { exam: Exam; 
         {tab === 'ISSUES' ? <WorkflowIssuesPanel data={data} busy={busy} canManage={can('exams.issues.manage')} act={act} reason={reason} /> : null}
         {tab === 'HISTORY' ? <ol className="space-y-3">{data.history.map(item => <li key={item.id} className="rounded-xl border p-3 text-sm"><p className="font-semibold">{workflowLabels[item.from_state]} → {workflowLabels[item.to_state]}</p><p>{item.reason}</p><p className="mt-1 text-xs text-muted-foreground">{item.actor_name ?? 'Sistema'} · {item.origin === 'SYSTEM' ? 'Reavaliação automática' : 'Ação do usuário'} · {new Date(item.occurred_at).toLocaleString('pt-BR')} · versão {item.version}</p></li>)}</ol> : null}
         <div className="flex flex-wrap gap-2 border-t pt-4">
-          {mutable && (!data.exam.reportingUserId || data.exam.reportingUserId === user.id) && (['TO_PREPARE', 'READY'].includes(data.exam.workflowState) || (user.role === 'DOCTOR' && data.exam.workflowState === 'IN_PROGRESS' && !data.exam.reportingUserId)) && can('reports.edit') ? <Button disabled={busy} onClick={() => void act('start', reason.trim() || 'Elaboração iniciada diretamente, com preparação opcional')}>Iniciar elaboração</Button> : null}
+          {mutable && user.role==='DOCTOR' && (!data.exam.reportingUserId || data.exam.reportingUserId === user.id || data.exam.workflowState==='TYPED') && (['TO_PREPARE','READY','TYPED'].includes(data.exam.workflowState) || (data.exam.workflowState === 'IN_PROGRESS' && !data.exam.reportingUserId)) && can('reports.edit') ? <Button disabled={busy || Boolean(data.exam.workflowState==='TYPED' && data.exam.reportingUserId!==user.id && reason.trim().length<10)} onClick={() => void act('start', reason.trim() || 'Elaboração iniciada diretamente, com preparação opcional',data.exam.workflowState==='TYPED' && data.exam.reportingUserId!==user.id ? {takeoverReason:reason}:{} )}>Iniciar elaboração</Button> : null}
           {mutable && ['READY','IN_PROGRESS','TYPED'].includes(data.exam.workflowState) && can('exams.prepare') ? <Button variant="outline" disabled={busy} onClick={() => void act('reopen', reason)}>Reabrir preparação</Button> : null}
           {mutable && can('exams.cancel') ? <Button variant="outline" disabled={busy} onClick={() => void act('cancel', reason)}>Cancelar exame</Button> : null}
           {can('exams.archive') ? <Button variant="outline" disabled={busy || data.exam.workflowState === 'IN_PROGRESS'} onClick={() => void act(data.exam.archivedAt ? 'unarchive' : 'archive', reason)}>{data.exam.archivedAt ? 'Restaurar na fila' : 'Arquivar da fila'}</Button> : null}

@@ -162,7 +162,7 @@ export const ExamsDashboard = ({ user, personal = false }: ExamsDashboardProps) 
             <StatCard label="Exames encontrados" value={total} icon={FilePlus2} loading={loading} hint="Conforme os filtros selecionados" />
             <StatCard label="Em elaboração" value={exams.filter(exam => exam.workflowState === 'IN_PROGRESS').length} icon={Clock3} tone="blue" loading={loading} hint="Exames desta página" />
             <StatCard label="Laudos finalizados" value={exams.filter(exam => exam.reportCompletionId).length} icon={FileCheck2} tone="violet" loading={loading} hint="Exames desta página" />
-            <StatCard label="Aguardando envio" value={exams.filter(exam => exam.reportCompletionId && !exam.reportSentAt && exam.reportHasOrigin && !exam.archivedAt && exam.workflowState === 'TYPED').length} icon={Send} tone="amber" loading={loading} hint="Exames desta página" />
+            <StatCard label="Aguardando envio" value={exams.filter(exam => exam.reportCompletionId && !exam.reportSentAt && exam.reportHasOrigin && !exam.archivedAt && ['SIGNED','RESIGNED','REVALIDATED'].includes(exam.workflowState)).length} icon={Send} tone="amber" loading={loading} hint="Exames desta página" />
           </div>
 
           <div className="space-y-4">

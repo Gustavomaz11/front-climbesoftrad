@@ -17,6 +17,9 @@ export interface CompletedReport {
   physician: { name: string; crm: string }
   originUnitName: string | null
   digitallySigned: boolean
+  physicianUserId?:string
+  previousVersionId?:string|null
+  revisionReason?:string|null
 }
 export type HospitalResult = Omit<
   CompletedReport,
@@ -30,10 +33,10 @@ export const getCompletedReport = async (examId: string) => {
   )
   return 'completion' in result ? null : result
 }
-export const finalizeReport = (examId: string, expectedVersion: number, contentHash: string, signatureId: string) =>
+export const finalizeReport = (examId: string, expectedVersion: number, contentHash: string, signatureId: string,clientId:string) =>
   apiRequestJson<CompletedReport>(
     `/exams/${examId}/report/finalize`,
-    { method: 'POST', body: JSON.stringify({ expectedVersion, contentHash, signatureId }) },
+    { method: 'POST', body: JSON.stringify({ expectedVersion, contentHash, signatureId,clientId }) },
     { authenticated: true },
   )
 export const sendReport = (examId: string, completionId: string) =>

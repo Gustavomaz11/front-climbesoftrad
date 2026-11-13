@@ -62,6 +62,7 @@ export interface Exam {
   reportingUserName: string | null
   reportingUserId?: string | null
   reportingStartedAt?: string | null
+  recallPurpose?:'CORRECTION'|'COMPLEMENT'|null
   reportCompletionId?: string | null
   reportFinalizedAt?: string | null
   reportSentAt?: string | null

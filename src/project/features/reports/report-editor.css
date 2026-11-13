@@ -88,6 +88,14 @@
   object-position: center bottom;
 }
 
+.report-print-denied { display: none; }
+
+@media print {
+  html:not([data-report-print-authorized="true"]) .report-document { display: none !important; }
+  html:not([data-report-print-authorized="true"]) .report-print-denied { display: block; color: black; }
+  [data-slot="sidebar"], [data-slot="sidebar-container"], .portal-chrome, nav, header, footer { display: none !important; }
+}
+
 @media print {
   html, body, #root {
     background: white !important;

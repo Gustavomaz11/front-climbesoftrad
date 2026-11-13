@@ -133,8 +133,8 @@ export const ExamsTable = ({
                   </span>
                 </SurfaceTableCell>
                 <SurfaceTableCell className="px-4 py-4">
-                  <p className="mb-1 text-xs font-bold text-foreground">{exam.reportSentAt ? 'Laudo enviado ao hospital' : exam.reportCompletionId ? 'Laudo finalizado · Aguardando envio' : workflowLabels[exam.workflowState] ?? 'A preparar'}{exam.archivedAt ? ' · Arquivado' : ''}</p>
-                  {exam.reportCompletionId ? <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{exam.reportSentAt ? 'Disponível no Hospital' : exam.reportHasOrigin ? 'Pronto para envio' : 'Sem hospital de origem vinculado'}</span> : exam.reportingUserName ? (
+                  <p className="mb-1 text-xs font-bold text-foreground">{exam.workflowState==='RECALLED' ? exam.recallPurpose==='COMPLEMENT'?'Reconvocar para Complementar':'Reconvocar para Corrigir' : workflowLabels[exam.workflowState] ?? 'A preparar'}{exam.archivedAt ? ' · Arquivado' : ''}</p>
+                  {exam.reportCompletionId && ['SIGNED','RESIGNED','REVALIDATED'].includes(exam.workflowState) ? <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{exam.reportSentAt ? 'Disponível no Hospital' : exam.reportHasOrigin ? 'Pronto para envio' : 'Sem hospital de origem vinculado'}</span> : exam.reportingUserName ? (
                     <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-brand-700">
                       <span className="size-1.5 rounded-full bg-muted0" />
                       Responsável: {exam.reportingUserName}
@@ -152,7 +152,7 @@ export const ExamsTable = ({
                     commentCount={exam.commentCount}
                     permissions={permissions}
                     isAdmin={isAdmin}
-                    canSendReport={Boolean(exam.reportCompletionId && !exam.reportSentAt && exam.reportHasOrigin && !exam.archivedAt && exam.workflowState === 'TYPED')}
+                    canSendReport={Boolean(exam.reportCompletionId && !exam.reportSentAt && exam.reportHasOrigin && !exam.archivedAt && ['SIGNED','RESIGNED','REVALIDATED'].includes(exam.workflowState))}
                     onAction={(action) => onAction(action, exam)}
                   />
                 </SurfaceTableCell>

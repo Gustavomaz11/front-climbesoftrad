@@ -2,6 +2,7 @@ import { Activity, Building2, FileCheck2, FileInput, FileStack, FolderHeart, Hom
 import type { AuthenticatedUser } from '@/project/features/auth/auth.types'
 
 const management = [
+  { label: 'Reavaliação de laudos', to: '/settings/report-reviews', icon: FileCheck2, permissions: ['reports.review.authorize'] },
   { label: 'Visão geral', to: '/dashboard', icon: Home, permissions: [] },
   { label: 'Médicos', to: '/settings/physicians/list', icon: Stethoscope, permissions: ['physicians.view'] },
   { label: 'Unidades e Routers', to: '/settings/units/list', icon: Building2, permissions: ['units.view'] },
