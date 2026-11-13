@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { apiRequestJson } from '../auth/auth-http-client'
 import type { WorkflowState } from './workflow.types'
 
-export interface WorkflowStatus { workflowState: WorkflowState; workflowVersion: number; archivedAt: string | null }
+export interface WorkflowStatus { workflowState: WorkflowState; workflowVersion: number; archivedAt: string | null; reportingUserId?: string | null; reportingStartedAt?: string | null }
 export const useWorkflowStatus = (id: string | undefined) => {
   const [value, setValue] = useState<WorkflowStatus | null>(null), [reload, setReload] = useState(0)
   useEffect(() => {

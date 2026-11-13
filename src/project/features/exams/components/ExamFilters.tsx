@@ -9,17 +9,18 @@ import { workflowLabels, type WorkflowState } from '../../exam-workflow/workflow
 interface ExamFiltersProps {
   value: ExamFiltersValue
   onChange: (value: ExamFiltersValue) => void
+  personal?: boolean
 }
 
 const periods: ExamPeriod[] = [7, 15, 30]
 
-export const ExamFilters = ({ value, onChange }: ExamFiltersProps) => {
+export const ExamFilters = ({ value, onChange, personal = false }: ExamFiltersProps) => {
   const hasFilters = Boolean(value.periodDays || value.examDate || value.patientName || value.workflowState || value.queue)
 
   return (
     <SurfaceCard aria-label="Filtros de exames" className="rounded-xl border border-border bg-card p-4 shadow-none gap-0 ring-0">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
-        <label className="text-xs font-bold text-muted-foreground">Fila<SurfaceNativeSelect className="mt-2 block h-11 rounded-xl border p-2 text-sm" value={value.queue ?? 'ACTIVE'} onChange={event => onChange({ ...value, queue: event.target.value as ExamFiltersValue['queue'] })}><option value="ACTIVE">Exames ativos</option><option value="PREPARATION">Preparação / pendências</option><option value="HISTORY">Histórico / cancelados</option><option value="ARCHIVED">Arquivados</option><option value="ALL">Todos</option></SurfaceNativeSelect></label>
+        {!personal && <label className="text-xs font-bold text-muted-foreground">Fila<SurfaceNativeSelect className="mt-2 block h-11 rounded-xl border p-2 text-sm" value={value.queue ?? 'ACTIVE'} onChange={event => onChange({ ...value, queue: event.target.value as ExamFiltersValue['queue'] })}><option value="ACTIVE">Exames ativos</option><option value="PREPARATION">Preparação / pendências</option><option value="HISTORY">Histórico / cancelados</option><option value="ARCHIVED">Arquivados</option><option value="ALL">Todos</option></SurfaceNativeSelect></label>}
         <label className="text-xs font-bold text-muted-foreground">Estado<SurfaceNativeSelect className="mt-2 block h-11 rounded-xl border p-2 text-sm" value={value.workflowState ?? ''} onChange={event => onChange({ ...value, workflowState: event.target.value ? event.target.value as WorkflowState : undefined })}><option value="">Todos os estados</option>{Object.entries(workflowLabels).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</SurfaceNativeSelect></label>
         <div className="min-w-0 flex-1">
           <label htmlFor="patient-search" className="mb-2 block text-xs font-bold text-muted-foreground">Nome do paciente</label>

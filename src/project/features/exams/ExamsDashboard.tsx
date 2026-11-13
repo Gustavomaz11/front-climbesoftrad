@@ -25,12 +25,14 @@ import { SendReportModal } from '../reports/SendReportModal'
 interface ExamsDashboardProps {
   user: AuthenticatedUser
   onLogout: () => void
+  personal?: boolean
 }
 
 const pageSize = 10
 const initialFilters: ExamFiltersValue = { examDate: '', patientName: '' }
 
-export const ExamsDashboard = ({ user }: ExamsDashboardProps) => {
+export const ExamsDashboard = ({ user, personal = false }: ExamsDashboardProps) => {
+  const assignment = personal ? 'MINE' : user.role === 'DOCTOR' ? 'UNASSIGNED' : undefined
 
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [filters, setFilters] = useState<ExamFiltersValue>(initialFilters)
@@ -57,7 +59,7 @@ export const ExamsDashboard = ({ user }: ExamsDashboardProps) => {
         setLoadError(false)
       }
 
-      void listExams({ examDate, patientName, periodDays, workflowState, queue, page, pageSize })
+      void listExams({ examDate, patientName, periodDays, workflowState, queue, page, pageSize, assignment })
         .then((result) => {
           if (!active || currentRequest !== requestVersion) return
           setExams(result.items)
@@ -92,7 +94,7 @@ export const ExamsDashboard = ({ user }: ExamsDashboardProps) => {
       window.removeEventListener('focus', refreshOnReturn)
       document.removeEventListener('visibilitychange', refreshOnReturn)
     }
-  }, [examDate, patientName, periodDays, workflowState, queue, page, reloadVersion])
+  }, [examDate, patientName, periodDays, workflowState, queue, page, reloadVersion, assignment])
 
   useEffect(() => {
     if (!notification) return
@@ -155,7 +157,7 @@ export const ExamsDashboard = ({ user }: ExamsDashboardProps) => {
 
 
         <main className="mx-auto w-full max-w-[1600px] p-4 sm:p-6 lg:p-8">
-          <PageHeading eyebrow="Central de laudos" title="Fila de exames" description="Consulte os estudos recebidos, elabore os laudos e encaminhe os resultados aos hospitais." actions={hasPermission(user,'exams.create') ? <Button onClick={() => setCreateModalOpen(true)} leftIcon={<Plus size={16} />}>Adicionar exame</Button> : undefined} />
+          <PageHeading eyebrow="Central de laudos" title={personal ? 'Minha fila' : 'Fila de exames'} description={personal ? 'Exames que você iniciou a laudar. Eles permanecem aqui até o envio do resultado ao hospital.' : user.role === 'DOCTOR' ? 'Exames disponíveis. Ao iniciar a elaboração no laudário, o exame será movido automaticamente para Minha fila.' : 'Consulte os estudos recebidos, elabore os laudos e encaminhe os resultados aos hospitais.'} actions={!personal && hasPermission(user,'exams.create') ? <Button onClick={() => setCreateModalOpen(true)} leftIcon={<Plus size={16} />}>Adicionar exame</Button> : undefined} />
           <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard label="Exames encontrados" value={total} icon={FilePlus2} loading={loading} hint="Conforme os filtros selecionados" />
             <StatCard label="Em elaboração" value={exams.filter(exam => exam.workflowState === 'IN_PROGRESS').length} icon={Clock3} tone="blue" loading={loading} hint="Exames desta página" />
@@ -165,7 +167,7 @@ export const ExamsDashboard = ({ user }: ExamsDashboardProps) => {
 
           <div className="space-y-4">
             <WorkflowNotifications refreshVersion={reloadVersion} onOpen={id => { void getExamWorkflow(id).then(data => setWorkflowExam(data.exam)).catch(() => setNotification('Não foi possível abrir a preparação.')) }} />
-            <ExamFilters value={filters} onChange={changeFilters} />
+            <ExamFilters value={filters} onChange={changeFilters} personal={personal} />
             {loadError ? (
               <Alert variant="error" className="items-center">
                 <span className="flex-1">Não foi possível carregar os exames.</span>

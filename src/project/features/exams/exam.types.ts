@@ -60,6 +60,8 @@ export interface Exam {
   createdAt: string
   updatedAt: string
   reportingUserName: string | null
+  reportingUserId?: string | null
+  reportingStartedAt?: string | null
   reportCompletionId?: string | null
   reportFinalizedAt?: string | null
   reportSentAt?: string | null
@@ -72,6 +74,7 @@ export interface Exam {
 }
 
 export interface ExamFiltersValue {
+  assignment?: 'UNASSIGNED' | 'MINE'
   workflowState?: import('../exam-workflow/workflow.types').WorkflowState
   queue?: 'ACTIVE' | 'PREPARATION' | 'HISTORY' | 'ARCHIVED' | 'ALL'
   periodDays?: ExamPeriod

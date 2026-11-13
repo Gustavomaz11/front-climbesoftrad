@@ -49,7 +49,8 @@ export const ReportEditorPage = () => {
   const [loadedExamId, setLoadedExamId] = useState<string | null>(null)
   const [finalizing, setFinalizing] = useState(false), [confirmFinalize, setConfirmFinalize] = useState(false), [finishError, setFinishError] = useState('')
   const finishingRef = useRef(false)
-  const canEdit = Boolean(user && loadedExamId === examId && hasPermission(user, 'reports.edit') && workflow.mutable && workflow.value?.workflowState !== 'TYPED' && !completion && !finalizing)
+  const assignedToOther = Boolean(workflow.value?.reportingUserId && workflow.value.reportingUserId !== user?.id)
+  const canEdit = Boolean(user && !assignedToOther && (user.role !== 'DOCTOR' || (workflow.value?.reportingUserId === user.id && workflow.value?.workflowState === 'IN_PROGRESS')) && loadedExamId === examId && hasPermission(user, 'reports.edit') && workflow.mutable && workflow.value?.workflowState !== 'TYPED' && !completion && !finalizing)
   const canUploadImage = Boolean(canEdit && user && hasPermission(user, 'reports.images.upload'))
   const [presentation, setPresentation] = useState<DocumentPresentation>({
     headerText: '',
@@ -257,7 +258,8 @@ export const ReportEditorPage = () => {
 
   return (
     <main className="min-h-screen bg-muted">
-      {examId ? <WorkflowEditorBanner id={examId} status={workflow.value} canStart={Boolean(user && hasPermission(user, 'reports.edit'))} onChange={workflow.refresh} /> : null}
+      {examId ? <WorkflowEditorBanner id={examId} status={workflow.value} canStart={Boolean(user && !assignedToOther && hasPermission(user, 'reports.edit'))} onChange={workflow.refresh} /> : null}
+      {assignedToOther && <p role="status" className="report-editor-chrome border-b px-6 py-3 text-sm">Este exame está na fila de outro médico. O laudo está disponível para consulta.</p>}
       {examId ? <PatientHistoryPanel examId={examId} /> : null}
       <header className="report-editor-chrome flex min-h-16 flex-wrap items-center justify-between gap-3 bg-card px-4 py-3 text-white sm:px-6">
         <div className="flex min-w-0 items-center gap-3">

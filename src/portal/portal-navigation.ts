@@ -18,6 +18,7 @@ const management = [
 const reporting = [
   { label: 'Visão geral', to: '/overview', icon: Home, permissions: ['exams.view'] },
   { label: 'Fila de exames', to: '/dashboard', icon: FileStack, permissions: ['exams.view'] },
+  { label: 'Minha fila', to: '/my-queue', icon: ListChecks, permissions: ['exams.view'], doctorOnly: true },
   { label: 'Pacientes', to: '/patients', icon: FolderHeart, permissions: ['patients.view'] },
 ]
 const hospital = [
@@ -28,7 +29,7 @@ const hospital = [
 export const portalKind = import.meta.env.VITE_PORTAL_KIND || 'sourad'
 export const portalNavigation = (user: AuthenticatedUser) =>
   (portalKind === 'configuracoes' ? management : portalKind === 'hospital' ? hospital : reporting)
-    .filter(item => !item.permissions.length || user.role === 'ADMIN' || item.permissions.some(permission => user.permissions.includes(permission)))
+    .filter(item => (!('doctorOnly' in item) || !item.doctorOnly || user.role === 'DOCTOR') && (!item.permissions.length || user.role === 'ADMIN' || item.permissions.some(permission => user.permissions.includes(permission))))
 
 export const portalLinks = [
   { name: 'ClimbeSoftRad', description: 'Central de laudos', icon: Activity, kind: 'sourad', url: import.meta.env.VITE_SOURAD_URL || 'http://localhost:5173' },

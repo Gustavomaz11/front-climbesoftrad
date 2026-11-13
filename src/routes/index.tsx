@@ -15,6 +15,7 @@ const Protected = () => <ProtectedRoute><Outlet /></ProtectedRoute>
 const Documents = () => <><div className="portal-chrome"><WorkspaceContextBar /></div><Outlet /></>
 const reportRoutes: RouteObject[] = [
   { path:'/dashboard', lazy:async()=>({ Component:(await import('@/project/features/auth/AuthenticatedHome')).AuthenticatedHome }) },
+  { path:'/my-queue', lazy:async()=>({ Component:(await import('@/project/features/auth/AuthenticatedHome')).MyQueuePage }) },
   { path:'/overview', lazy:async()=>({ Component:(await import('@/portal/ReportingOverview')).ReportingOverview }) },
   { path:'/patients', lazy:async()=>({ Component:(await import('@/project/features/patients/PatientsPage')).PatientsPage }) },
   { path:'/patients/review', lazy:async()=>({ Component:(await import('@/project/features/patients/PatientReviewsPage')).PatientReviewsPage }) },

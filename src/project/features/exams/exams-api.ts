@@ -14,6 +14,7 @@ export const listExams = ({
   pageSize,
   workflowState,
   queue,
+  assignment,
 }: ListExamsOptions) => {
   const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
   if (periodDays) query.set('periodDays', String(periodDays))
@@ -21,6 +22,7 @@ export const listExams = ({
   if (patientName.trim()) query.set('patientName', patientName.trim())
   if (workflowState) query.set('workflowState', workflowState)
   if (queue) query.set('queue', queue)
+  if (assignment) query.set('assignment', assignment)
 
   return apiRequestJson<PaginatedExams>(
     `/exams?${query.toString()}`,

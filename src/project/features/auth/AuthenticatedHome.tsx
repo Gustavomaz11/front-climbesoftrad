@@ -1,8 +1,8 @@
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { ExamsDashboard } from '../exams/ExamsDashboard'
 import { useAuthentication } from './auth-context'
 
-export const AuthenticatedHome = () => {
+export const AuthenticatedHome = ({ personal = false }: { personal?: boolean }) => {
   const { user, logout } = useAuthentication()
   const navigate = useNavigate()
 
@@ -12,6 +12,9 @@ export const AuthenticatedHome = () => {
   }
 
   if (!user) return null
+  if (personal && user.role !== 'DOCTOR') return <Navigate to="/dashboard" replace />
 
-  return <ExamsDashboard user={user} onLogout={() => void handleLogout()} />
+  return <ExamsDashboard key={personal ? 'personal' : 'general'} user={user} personal={personal} onLogout={() => void handleLogout()} />
 }
+
+export const MyQueuePage = () => <AuthenticatedHome personal />

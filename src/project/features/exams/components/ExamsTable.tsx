@@ -137,7 +137,7 @@ export const ExamsTable = ({
                   {exam.reportCompletionId ? <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{exam.reportSentAt ? 'Disponível no Hospital' : exam.reportHasOrigin ? 'Pronto para envio' : 'Sem hospital de origem vinculado'}</span> : exam.reportingUserName ? (
                     <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-brand-700">
                       <span className="size-1.5 rounded-full bg-muted0" />
-                      Sendo laudando por {exam.reportingUserName}
+                      Responsável: {exam.reportingUserName}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">

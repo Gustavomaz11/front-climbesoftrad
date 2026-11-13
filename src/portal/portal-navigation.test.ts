@@ -12,4 +12,9 @@ describe('Reporting navigation access', () => {
   it('keeps reporting, overview and patients available for the platform administrator', () => {
     expect(portalNavigation(user([], 'ADMIN')).map(item => item.to)).toEqual(['/overview', '/dashboard', '/patients'])
   })
+  it('exposes the personal queue only to doctors with exam access', () => {
+    expect(portalNavigation(user(['exams.view'], 'DOCTOR')).map(item => item.to)).toEqual(['/overview', '/dashboard', '/my-queue'])
+    expect(portalNavigation(user(['exams.view'])).some(item => item.to === '/my-queue')).toBe(false)
+    expect(portalNavigation(user([], 'DOCTOR'))).toEqual([])
+  })
 })
